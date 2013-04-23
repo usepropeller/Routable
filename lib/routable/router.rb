@@ -69,6 +69,14 @@ module Routable
       self.routes[format] = options.merge!(klass: klass)
     end
 
+    # Open the given URL via the iOS protocol
+    # EX
+    # router.open_external("http://google.com")
+    # => Opens Google in Safari.app
+    def open_external(url)
+      UIApplication.sharedApplication.openURL(NSURL.URLWithString(url))
+    end
+
     # Push the UIViewController for the given url
     # EX
     # router.open("users/3")
@@ -89,8 +97,20 @@ module Routable
       end
 
       controller = controller_for_url(url)
-      if self.navigation_controller.modalViewController
-        self.navigation_controller.dismissModalViewControllerAnimated(animated)
+      if visible_controller = self.navigation_controller.modalViewController
+        dismiss_animated = animated
+
+        # Can't dismiss and present two controllers animated at the same time,
+        # so we just dismiss the current one without an animation
+        if controller_options[:modal] && dismiss_animated
+          dismiss_animated = false
+        end
+
+        if visible_controller.is_a?(UINavigationController) && visible_controller.topViewController && visible_controller.topViewController.respond_to?("cancel")
+          visible_controller.topViewController.cancel(dismiss_animated)
+        else
+          self.navigation_controller.dismissModalViewControllerAnimated(dismiss_animated)
+        end
       end
       if controller_options[:modal]
         if controller.class == UINavigationController
