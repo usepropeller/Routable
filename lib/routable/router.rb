@@ -129,6 +129,8 @@ module Routable
           self.navigation_controller.pushViewController(controller, animated:animated)
         end
       end
+
+      controller
     end
 
     # Pop the top level UIViewController
