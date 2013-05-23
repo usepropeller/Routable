@@ -51,10 +51,14 @@ module Routable
     #     - A symbol to represented transition style used. Mapped to UIModalTransitionStyle.
     #   :presentation => [:full_screen, :page_sheet, :form_sheet, :current]
     #     - A symbol to represented presentation style used. Mapped to UIModalPresentationStyle.
+    #   :default_params
+    #     - A Hash of default parameters passed to the constructor
     def map(url, klass = nil, options = {}, &callback)
       format = url
 
       if callback
+        options = klass || {}
+        klass = nil
         self.routes[format] = options.merge!(callback: callback)
       end
 
@@ -86,12 +90,13 @@ module Routable
 
       if controller_options[:callback]
         params = controller_options[:open_params]
+        default_params = controller_options[:default_params] || {}
         callback = controller_options[:callback]
         case callback.arity
         when 0
           callback.call
         when 1
-          callback.call(params)
+          callback.call(params.merge(default_params))
         end
         return
       end
@@ -215,7 +220,8 @@ module Routable
       open_klass = open_options[:klass]
       controller = open_klass.alloc
       if controller.respond_to? :initWithParams
-        controller = controller.initWithParams(open_params)
+        default_params = open_options[:default_params] || {}
+        controller = controller.initWithParams(open_params.merge(default_params))
       else
         controller = controller.init
       end

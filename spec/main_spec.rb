@@ -1,9 +1,11 @@
 class UsersTestController < UIViewController
   attr_accessor :user_id
+  attr_accessor :extra_param
 
   def initWithParams(params = {})
     init()
     self.user_id = params[:user_id]
+    self.extra_param = params[:extra]
     self
   end
 end
@@ -45,13 +47,22 @@ describe "the url router" do
     @router.navigation_controller.viewControllers.count.should == 1
   end
 
+  it "opens urls with default params" do
+    @router.navigation_controller = @nav_controller
+    format = "users/:user_id"
+    @router.map(format, UsersTestController, default_params: {extra: "world"})
+    @router.open("users/3")
+
+    @nav_controller.topViewController.extra_param.should == "world"
+  end
+
   it "opens nav controller to url" do
     @router.navigation_controller = @nav_controller
     make_test_controller_route
     @router.open("users/3")
 
     @nav_controller.viewControllers.count.should == 1
-    @nav_controller.viewControllers.last.class.should == UsersTestController    
+    @nav_controller.viewControllers.last.class.should == UsersTestController
   end
 
   it "uses the shared properties correctly" do
@@ -120,5 +131,15 @@ describe "the url router" do
 
     @router.open("logout/123")
     @called.should == "123"
+  end
+
+  it "should work with callback blocks & default_params" do
+    @called = false
+    @router.map("logout/:id", default_params: {hello: "world"}) do |params|
+      @called = params[:hello]
+    end
+
+    @router.open("logout/123")
+    @called.should == "world"
   end
 end
