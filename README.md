@@ -74,11 +74,14 @@ class AppDelegate
 
     # :modal means we push it modally.
     @router.map("login", LoginController, modal: true)
+
     # :shared means it will only keep one instance of this VC in the hierarchy;
     # if we push it again later, it will pop any covering VCs.
     @router.map("menu", MenuController, shared: true)
     @router.map("profile/:id", ProfileController)
-    @router.map("messages", MessagesController)
+
+    # :resets will reset the navigation stack with the target view controller
+    @router.map("messages", MessagesController, resets: true)
     @router.map("message/:id", MessageThreadController)
 
     # can also route arbitrary blocks of code
@@ -90,6 +93,19 @@ class AppDelegate
     end
 
     @window.rootViewController = @router.navigation_controller
+  end
+end
+```
+
+## Configuration of View Controllers
+
+If you need to configure a view controller before the router navigates to it, use a block:
+
+``` ruby
+# Configure and push an ImageEditorController
+BW::Device.camera.any.picture(media_types: [:movie, :image]) do |result|
+  router.open('editor') do |controller|
+    controller.image = result[:original_image]
   end
 end
 ```
